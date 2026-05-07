@@ -1,0 +1,271 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Gallery from '../components/Gallery';
+import ProductGrid from '../components/ProductGrid';
+import Customizer from '../components/Customizer';
+import Reviews from '../components/Reviews';
+import '../styles/global.css';
+
+const WA_PHONE = '51944073494';
+---
+
+<Layout>
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="container nav-row">
+      <a href="#" class="logo"><span>Mi Tazita</span><span class="dot"></span></a>
+      <div class="nav-links">
+        <a href="#modelos">Modelos</a>
+        <a href="#disenos-listos">Diseños listos</a>
+        <a href="#personalizar">Personalizar</a>
+        <a href="#como">Cómo funciona</a>
+        <a href="#resenas">Reseñas</a>
+      </div>
+      <a href="#personalizar" class="nav-cta">
+        Personalizar
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="container hero-grid">
+      <div>
+        <span class="eyebrow">Edición Día de la Madre · 2026</span>
+        <h1>Convierte un recuerdo en el regalo <em>perfecto</em> para mamá.</h1>
+        <p class="hero-sub">Diseña una taza única con su foto favorita, su nombre o una frase que la haga llorar (de la buena). Hecha a mano en Lima, lista en 48 horas.</p>
+        <div class="hero-ctas">
+          <a href="#personalizar" class="btn btn-primary">
+            Personalizar mi taza
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#modelos" class="btn btn-ghost">Ver modelos</a>
+        </div>
+        <div class="hero-meta">
+          <div class="hero-meta-item"><span class="k">+1.200</span><span class="v">MAMÁS FELICES</span></div>
+          <div class="hero-meta-item"><span class="k">48h</span><span class="v">LISTA EN CASA</span></div>
+          <div class="hero-meta-item"><span class="k">4.9★</span><span class="v">RESEÑAS REALES</span></div>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="hero-tag"><span class="pulse"></span> Pedidos abiertos · respondemos en minutos</div>
+        <img src="/images/hero.png" alt="Taza personalizada Mi Tazita" class="hero-img" />
+        <div class="hero-card">
+          <div class="tiny">★★★★★</div>
+          <div class="qt">"Mamá lloró cuando la abrió. Vale cada sol."</div>
+          <div class="who">— Carla M., Surco</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- BENEFITS -->
+  <section class="benefits" style="padding: 0;">
+    <div class="container">
+      <div class="benefits-grid">
+        <div class="benefit">
+          <div class="benefit-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 15-5-5L5 19"/></svg>
+          </div>
+          <h3>Foto, nombre o frase</h3>
+          <p>Sube su foto favorita, escribe su nombre o esa frase que solo ustedes entienden. Tú decides el detalle.</p>
+        </div>
+        <div class="benefit">
+          <div class="benefit-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>
+          </div>
+          <h3>Pensada para mamá</h3>
+          <p>Diseños cálidos, frases reales, presentación con caja y tarjeta. Un regalo que se siente, no que se compra.</p>
+        </div>
+        <div class="benefit">
+          <div class="benefit-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </div>
+          <h3>Asesoría por WhatsApp</h3>
+          <p>¿Dudas con la foto o el texto? Te respondemos al toque y te enviamos una vista previa antes de imprimir.</p>
+        </div>
+        <div class="benefit">
+          <div class="benefit-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7M5.5 21a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM18.5 21a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/></svg>
+          </div>
+          <h3>Delivery 24/48h</h3>
+          <p>Entregas seguras en Lima Metropolitana. Envíos a provincia coordinados por WhatsApp.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <section id="modelos">
+    <div class="container">
+      <div class="sec-head">
+        <h2>Modelos para cada tipo de <em>mamá</em>.</h2>
+        <p>Seis estilos cuidadosamente diseñados. Elige uno y hazlo único en el siguiente paso.</p>
+      </div>
+      <div class="gallery-grid">
+        <Gallery client:load />
+      </div>
+    </div>
+  </section>
+
+  <!-- DISEÑOS LISTOS -->
+  <section id="disenos-listos">
+    <div class="container">
+      <div class="sec-head">
+        <h2>Diseños <em>listos</em> para regalar.</h2>
+        <p>Sin personalizar. Llegan tal como las ves. Perfectas si ya encontraste lo ideal.</p>
+      </div>
+      <ProductGrid client:load />
+    </div>
+  </section>
+
+  <!-- CUSTOMIZER -->
+  <section id="personalizar" class="customizer-host">
+    <div class="container">
+      <div class="sec-head">
+        <h2>Diseña tu <em>tazita</em> en 5 pasos.</h2>
+        <p>Modelo, foto, palabras, extras y tus datos. Verás una vista previa en vivo.</p>
+      </div>
+      <Customizer client:load />
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="como">
+    <div class="container">
+      <div class="steps">
+        <div class="sec-head" style="margin-bottom: 40px;">
+          <h2>Tres pasos. <em>Cero estrés.</em></h2>
+          <p>Sin carrito de compras complicado. Confirmas todo en línea y te avisamos por correo.</p>
+        </div>
+        <div class="steps-grid">
+          <div class="step">
+            <span class="step-num">01</span>
+            <h3>Elige tu diseño</h3>
+            <p>Mira los seis modelos y escoge el que más te haga clic. Cada uno tiene su personalidad.</p>
+          </div>
+          <div class="step">
+            <span class="step-num">02</span>
+            <h3>Personalízalo</h3>
+            <p>Sube la foto, escribe el nombre, suma una dedicatoria y elige extras. Lo ves todo en vivo.</p>
+          </div>
+          <div class="step">
+            <span class="step-num">03</span>
+            <h3>Confirma y recibe</h3>
+            <p>Enviamos tu pedido, coordinamos el pago y te mandamos confirmación por correo y WhatsApp.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section id="resenas">
+    <div class="container">
+      <div class="sec-head">
+        <h2>Lo que dicen <em>las hijas</em> (y los hijos).</h2>
+        <p>Reseñas reales de pedidos verificados.</p>
+      </div>
+      <div class="reviews-grid">
+        <Reviews client:load />
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST -->
+  <section>
+    <div class="container">
+      <div class="trust">
+        <div class="sec-head">
+          <h2>Compras con la <em>tranquilidad</em> de mamá.</h2>
+          <p>Cinco compromisos que sostenemos en cada pedido, sin letra chica.</p>
+        </div>
+        <div class="trust-grid">
+          <div class="trust-item">
+            <div class="ti-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+            <h4>Yape o transferencia</h4>
+            <p>Paga al confirmar. Sin pasarelas, sin trampas.</p>
+          </div>
+          <div class="trust-item">
+            <div class="ti-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+            <h4>Atención humana</h4>
+            <p>Te responde una persona, no un bot.</p>
+          </div>
+          <div class="trust-item">
+            <div class="ti-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 19l9-7-9-7-9 7 9 7Z"/><path d="M12 12v7"/></svg></div>
+            <h4>Diseños únicos</h4>
+            <p>Cada taza se hace después de tu confirmación.</p>
+          </div>
+          <div class="trust-item">
+            <div class="ti-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 11 3 3L22 4"/></svg></div>
+            <h4>Vista previa</h4>
+            <p>Te enviamos un mock antes de imprimir.</p>
+          </div>
+          <div class="trust-item">
+            <div class="ti-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 11V7a4 4 0 0 0-8 0v4"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg></div>
+            <h4>Empaque seguro</h4>
+            <p>Caja con espuma. Llega entera, garantizado.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <div class="foot-grid">
+        <div>
+          <a href="#" class="logo"><span>Mi Tazita</span><span class="dot"></span></a>
+          <p class="foot-msg">"Porque a mamá no le regalas un objeto. Le devuelves un recuerdo."</p>
+        </div>
+        <div class="foot">
+          <h5>Tienda</h5>
+          <ul>
+            <li><a href="#modelos">Modelos</a></li>
+            <li><a href="#personalizar">Personalizar</a></li>
+            <li><a href="#como">Cómo funciona</a></li>
+            <li><a href="#resenas">Reseñas</a></li>
+          </ul>
+        </div>
+        <div class="foot">
+          <h5>Contacto</h5>
+          <ul>
+            <li><a href={`https://wa.me/${WA_PHONE}`} target="_blank" rel="noopener">WhatsApp · +51 944 073 494</a></li>
+            <li><a href="#">Instagram · @mitazita</a></li>
+            <li><a href="#">Facebook · /mitazita</a></li>
+            <li><a href="mailto:hola@mitazita.pe">hola@mitazita.pe</a></li>
+          </ul>
+        </div>
+        <div class="foot">
+          <h5>Pago & envío</h5>
+          <ul>
+            <li><a href="#">Yape · Plin</a></li>
+            <li><a href="#">Transferencia BCP / BBVA</a></li>
+            <li><a href="#">Delivery Lima 24/48h</a></li>
+            <li><a href="#">Envíos a provincia</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <span>© 2026 Mi Tazita · Lima, Perú</span>
+        <span>Hecho con cariño para mamás reales.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- WhatsApp floating button -->
+  <a
+    href={`https://wa.me/${WA_PHONE}`}
+    class="wa-float"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Contactar por WhatsApp"
+  >
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-1 1.1-.2.2-.4.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.8-.7-1.4-1.7-1.6-1.9-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z"/>
+    </svg>
+  </a>
+</Layout>
