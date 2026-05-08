@@ -3,7 +3,7 @@ import { MUG_MODELS, EXTRAS } from '../data';
 import Mug from './Mug';
 import { addToCart } from '../stores/cart';
 
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:4000';
+const API_URL = (import.meta.env.PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
 
 interface ExtrasState {
   caja: boolean;

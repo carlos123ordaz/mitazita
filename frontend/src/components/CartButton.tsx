@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { getCart, removeFromCart, clearCart, onCartChange } from '../stores/cart';
 import type { CartItem, CartMugItem, CartProductItem } from '../stores/cart';
 
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:4000';
+const API_URL = (import.meta.env.PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
 const WA_PHONE = '51944073494';
 
 interface Customer {

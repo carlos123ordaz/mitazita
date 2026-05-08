@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { addToCart } from '../stores/cart';
 
-const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:4000';
+const API_URL = (import.meta.env.PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
 
 interface Product {
   _id: string;
