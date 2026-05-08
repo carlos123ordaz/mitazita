@@ -1,17 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { MUG_MODELS, EXTRAS } from '../data';
 import Mug from './Mug';
+import { addToCart } from '../stores/cart';
 
 const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:4000';
-
-interface CustomerData {
-  name: string;
-  surname: string;
-  phone: string;
-  email: string;
-  address: string;
-  reference: string;
-}
 
 interface ExtrasState {
   caja: boolean;
@@ -19,11 +11,6 @@ interface ExtrasState {
   magica: boolean;
   delivery: boolean;
 }
-
-type OrderResult = {
-  code: string;
-  orderId: string;
-};
 
 export default function Customizer() {
   const [step, setStep] = useState(1);
@@ -33,11 +20,7 @@ export default function Customizer() {
   const [uploadError, setUploadError] = useState('');
   const [mugName, setMugName] = useState('');
   const [dedication, setDedication] = useState('');
-  const [extras, setExtras] = useState<ExtrasState>({ caja: true, tarjeta: false, magica: false, delivery: true });
-  const [customer, setCustomer] = useState<CustomerData>({ name: '', surname: '', phone: '', email: '', address: '', reference: '' });
-  const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<OrderResult | null>(null);
-  const [submitError, setSubmitError] = useState('');
+  const [extras, setExtras] = useState<ExtrasState>({ caja: false, tarjeta: false, magica: false, delivery: false });
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -52,9 +35,13 @@ export default function Customizer() {
 
   const model = MUG_MODELS.find((m) => m.id === modelId) || MUG_MODELS[0];
 
-  const total = useMemo(() => {
+  // Delivery is a flat per-order fee, not per mug — excluded from individual mug price
+  const currentMugTotal = useMemo(() => {
     let t = model.price;
-    EXTRAS.forEach((e) => { if (extras[e.id as keyof ExtrasState]) t += e.price; });
+    EXTRAS.forEach((e) => {
+      if (e.id === 'delivery') return;
+      if (extras[e.id as keyof ExtrasState]) t += e.price;
+    });
     return t;
   }, [model, extras]);
 
@@ -92,104 +79,37 @@ export default function Customizer() {
     if (file?.type.startsWith('image/')) uploadPhoto(file);
   };
 
-  const handleCustomerChange = (field: keyof CustomerData, value: string) => {
-    setCustomer((prev) => ({ ...prev, [field]: value }));
+  const addMugToCart = () => {
+    addToCart({
+      type: 'mug',
+      modelId: model.id,
+      modelName: model.name,
+      photoUrl,
+      text: { name: mugName, dedication },
+      extras: { ...extras },
+      price: currentMugTotal,
+    });
+    setModelId('clasica');
+    setPhotoUrl(null);
+    setUploadError('');
+    setMugName('');
+    setDedication('');
+    setExtras({ caja: false, tarjeta: false, magica: false, delivery: false });
+    setStep(1);
+    window.dispatchEvent(new CustomEvent('mitazita:openCart'));
   };
-
-  const customerValid = () =>
-    customer.name.trim() &&
-    customer.surname.trim() &&
-    customer.phone.trim() &&
-    customer.email.trim() &&
-    customer.address.trim();
-
-  const submitOrder = async () => {
-    if (!customerValid()) return;
-    setSubmitting(true);
-    setSubmitError('');
-
-    const extrasObj = {
-      caja: extras.caja,
-      tarjeta: extras.tarjeta,
-      magica: extras.magica,
-      delivery: extras.delivery,
-    };
-
-    const payload = {
-      customer: { ...customer },
-      mug: {
-        modelId: model.id,
-        modelName: model.name,
-        photoUrl: photoUrl || undefined,
-        text: { name: mugName, dedication },
-        extras: extrasObj,
-      },
-      basePrice: model.price,
-      total,
-    };
-
-    try {
-      const res = await fetch(`${API_URL}/api/orders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al enviar');
-      setResult({ code: data.code, orderId: data.orderId });
-    } catch (err: unknown) {
-      setSubmitError(err instanceof Error ? err.message : 'Error al enviar el pedido. Intenta de nuevo.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const WA_PHONE = '51944073494';
-
-  if (result) {
-    return (
-      <div className="cz">
-        <div className="cz-success">
-          <div className="cz-success-icon">✓</div>
-          <h2 className="cz-success-title">¡Pedido enviado!</h2>
-          <p className="cz-success-sub">
-            Hemos recibido tu pedido. Cuando lo confirmemos, recibirás un correo con todos los detalles.
-          </p>
-          <div className="cz-code-box">
-            <div className="cz-code-label">TU CÓDIGO DE PEDIDO</div>
-            <div className="cz-code-value">{result.code}</div>
-          </div>
-          <p className="cz-success-hint">
-            Guarda este código. Te lo pediremos si necesitas hacer seguimiento.
-          </p>
-          <a
-            href={`https://wa.me/${WA_PHONE}?text=${encodeURIComponent(`Hola Mi Tazita! Acabo de hacer un pedido con el código *${result.code}*. ¿Podrían confirmarlo?`)}`}
-            className="btn btn-wa"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-1 1.1-.2.2-.4.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.8-.7-1.4-1.7-1.6-1.9-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.4 1.3 4.9L2 22l5.3-1.4c1.4.8 3 1.2 4.7 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>
-            Coordinar por WhatsApp
-          </a>
-        </div>
-
-        <style>{successCss}</style>
-      </div>
-    );
-  }
 
   const STEP_LABELS = [
     { n: 1, k: 'Modelo' },
     { n: 2, k: 'Foto' },
     { n: 3, k: 'Texto' },
     { n: 4, k: 'Extras' },
-    { n: 5, k: 'Datos' },
   ];
 
   return (
     <div className="cz">
       <div className="cz-grid">
-        {/* Live preview */}
+        {/* Vista previa en vivo */}
         <div className="cz-preview">
           <div className="cz-preview-inner">
             <div className="cz-preview-stage">
@@ -200,28 +120,32 @@ export default function Customizer() {
                 <div className="cz-pf-label">VISTA PREVIA EN VIVO</div>
                 <div className="cz-pf-name">{model.name}</div>
               </div>
-              <div className="cz-pf-price">S/ {total}</div>
+              <div style={{ textAlign: 'right' }}>
+                <div className="cz-pf-price">S/ {currentMugTotal}</div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Steps */}
+        {/* Formulario por pasos */}
         <div className="cz-form">
-          <div className="cz-steps">
-            {STEP_LABELS.map((s) => (
-              <button
-                key={s.n}
-                className={`cz-step${step === s.n ? ' active' : ''}${step > s.n ? ' done' : ''}`}
-                onClick={() => setStep(s.n)}
-              >
-                <span className="cz-step-n">{step > s.n ? '✓' : `0${s.n}`}</span>
-                <span className="cz-step-k">{s.k}</span>
-              </button>
-            ))}
+          <div className="cz-form-header">
+            <div className="cz-steps">
+              {STEP_LABELS.map((s) => (
+                <button
+                  key={s.n}
+                  className={`cz-step${step === s.n ? ' active' : ''}${step > s.n ? ' done' : ''}`}
+                  onClick={() => setStep(s.n)}
+                >
+                  <span className="cz-step-n">{step > s.n ? '✓' : `0${s.n}`}</span>
+                  <span className="cz-step-k">{s.k}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="cz-body">
-            {/* STEP 1: Model */}
+            {/* PASO 1: Modelo */}
             {step === 1 && (
               <div className="cz-pane">
                 <h3 className="cz-q">Elige el modelo de taza.</h3>
@@ -246,7 +170,7 @@ export default function Customizer() {
               </div>
             )}
 
-            {/* STEP 2: Photo */}
+            {/* PASO 2: Foto */}
             {step === 2 && (
               <div className="cz-pane">
                 <h3 className="cz-q">Sube la foto que va en la taza.</h3>
@@ -284,7 +208,7 @@ export default function Customizer() {
               </div>
             )}
 
-            {/* STEP 3: Text */}
+            {/* PASO 3: Texto */}
             {step === 3 && (
               <div className="cz-pane">
                 <h3 className="cz-q">Las palabras que ella va a leer.</h3>
@@ -320,13 +244,13 @@ export default function Customizer() {
               </div>
             )}
 
-            {/* STEP 4: Extras */}
+            {/* PASO 4: Extras */}
             {step === 4 && (
               <div className="cz-pane">
                 <h3 className="cz-q">El detalle final.</h3>
                 <p className="cz-h">Extras opcionales. Marca solo lo que quieras agregar.</p>
                 <div className="cz-extras">
-                  {EXTRAS.map((e) => (
+                  {EXTRAS.filter((e) => e.id !== 'delivery').map((e) => (
                     <label key={e.id} className={`cz-extra${extras[e.id as keyof ExtrasState] ? ' on' : ''}`}>
                       <input
                         type="checkbox"
@@ -344,60 +268,13 @@ export default function Customizer() {
                 </div>
 
                 <div className="cz-summary">
-                  <h4>Resumen</h4>
-                  <div className="cz-sum-row"><span>Taza · {model.name}</span><span>S/ {model.price}</span></div>
-                  {EXTRAS.filter((x) => extras[x.id as keyof ExtrasState]).map((x) => (
+                  <h4>Esta taza</h4>
+                  <div className="cz-sum-row"><span>{model.name}</span><span>S/ {model.price}</span></div>
+                  {EXTRAS.filter((x) => x.id !== 'delivery' && extras[x.id as keyof ExtrasState]).map((x) => (
                     <div key={x.id} className="cz-sum-row"><span>+ {x.label}</span><span>S/ {x.price}</span></div>
                   ))}
-                  <div className="cz-sum-row total"><span>Total</span><span>S/ {total}</span></div>
+                  <div className="cz-sum-row total"><span>Subtotal</span><span>S/ {currentMugTotal}</span></div>
                 </div>
-              </div>
-            )}
-
-            {/* STEP 5: Customer data */}
-            {step === 5 && (
-              <div className="cz-pane">
-                <h3 className="cz-q">¿A quién se lo enviamos?</h3>
-                <p className="cz-h">Tus datos para coordinar la entrega. No los compartimos con nadie.</p>
-                <div className="cz-form-2col">
-                  <div className="cz-field">
-                    <label>Nombre *</label>
-                    <input type="text" placeholder="María" value={customer.name} onChange={(e) => handleCustomerChange('name', e.target.value)} />
-                  </div>
-                  <div className="cz-field">
-                    <label>Apellido *</label>
-                    <input type="text" placeholder="García" value={customer.surname} onChange={(e) => handleCustomerChange('surname', e.target.value)} />
-                  </div>
-                </div>
-                <div className="cz-form-2col">
-                  <div className="cz-field">
-                    <label>Teléfono / WhatsApp *</label>
-                    <input type="tel" placeholder="987 654 321" value={customer.phone} onChange={(e) => handleCustomerChange('phone', e.target.value)} />
-                  </div>
-                  <div className="cz-field">
-                    <label>Correo *</label>
-                    <input type="email" placeholder="maria@email.com" value={customer.email} onChange={(e) => handleCustomerChange('email', e.target.value)} />
-                  </div>
-                </div>
-                <div className="cz-field">
-                  <label>Dirección de entrega *</label>
-                  <input type="text" placeholder="Av. La Marina 123, San Miguel, Lima" value={customer.address} onChange={(e) => handleCustomerChange('address', e.target.value)} />
-                </div>
-                <div className="cz-field">
-                  <label>Referencia (opcional)</label>
-                  <input type="text" placeholder="Frente al parque, casa con reja azul…" value={customer.reference} onChange={(e) => handleCustomerChange('reference', e.target.value)} />
-                </div>
-
-                <div className="cz-summary">
-                  <h4>Total del pedido</h4>
-                  <div className="cz-sum-row"><span>Taza · {model.name}</span><span>S/ {model.price}</span></div>
-                  {EXTRAS.filter((x) => extras[x.id as keyof ExtrasState]).map((x) => (
-                    <div key={x.id} className="cz-sum-row"><span>+ {x.label}</span><span>S/ {x.price}</span></div>
-                  ))}
-                  <div className="cz-sum-row total"><span>Total</span><span>S/ {total}</span></div>
-                </div>
-
-                {submitError && <p className="cz-error">{submitError}</p>}
               </div>
             )}
           </div>
@@ -410,24 +287,22 @@ export default function Customizer() {
               <span />
             )}
 
-            {step < 5 ? (
-              <button className="btn btn-primary" onClick={() => setStep(step + 1)}>
-                Siguiente
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
-              </button>
-            ) : (
-              <button
-                className="btn btn-primary"
-                onClick={submitOrder}
-                disabled={submitting || !customerValid()}
-                style={{ opacity: !customerValid() ? 0.6 : 1 }}
-              >
-                {submitting ? 'Enviando…' : `Confirmar pedido · S/ ${total}`}
-                {!submitting && (
+            <div className="cz-foot-right">
+              {step === 4 ? (
+                <button className="btn btn-primary" onClick={addMugToCart}>
+                  Agregar al carrito
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                  </svg>
+                </button>
+              ) : (
+                <button className="btn btn-primary" onClick={() => setStep(step + 1)}>
+                  Siguiente
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M13 5l7 7-7 7" /></svg>
-                )}
-              </button>
-            )}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -436,31 +311,6 @@ export default function Customizer() {
     </div>
   );
 }
-
-const successCss = `
-  .cz-success {
-    display: flex; flex-direction: column; align-items: center;
-    padding: 56px 32px; text-align: center;
-  }
-  .cz-success-icon {
-    width: 64px; height: 64px; border-radius: 50%;
-    background: var(--accent-deep); color: white;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 28px; font-weight: 700; margin-bottom: 24px;
-  }
-  .cz-success-title { font-family: var(--font-display); font-size: 36px; margin-bottom: 12px; }
-  .cz-success-sub { color: var(--ink-soft); font-size: 16px; max-width: 460px; line-height: 1.6; margin-bottom: 28px; }
-  .cz-code-box {
-    background: var(--bg-soft); border-radius: 14px; padding: 24px 36px;
-    margin-bottom: 16px;
-  }
-  .cz-code-label { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 8px; }
-  .cz-code-value {
-    font-size: 40px; font-weight: 700; letter-spacing: .1em;
-    font-family: 'Courier New', monospace; color: var(--accent-deep);
-  }
-  .cz-success-hint { font-size: 13px; color: var(--ink-mute); margin-bottom: 32px; }
-`;
 
 const customizerCss = `
   .cz { background: var(--paper); border-radius: 20px; border: 1px solid var(--line); overflow: hidden; box-shadow: var(--shadow-soft); }
@@ -487,7 +337,8 @@ const customizerCss = `
   .cz-form { padding: 32px 36px 28px; display: flex; flex-direction: column; }
   @media (max-width: 540px) { .cz-form { padding: 24px 20px; } }
 
-  .cz-steps { display: flex; gap: 6px; margin-bottom: 28px; flex-wrap: wrap; }
+  .cz-form-header { margin-bottom: 28px; }
+  .cz-steps { display: flex; gap: 6px; flex-wrap: wrap; }
   .cz-step {
     flex: 1; display: flex; flex-direction: column; align-items: flex-start;
     padding: 10px 0 12px; border-top: 2px solid var(--line);
@@ -505,15 +356,12 @@ const customizerCss = `
   .cz-q { font-family: var(--font-display); font-size: 28px; line-height: 1.15; letter-spacing: -.01em; }
   .cz-h { color: var(--ink-soft); margin-top: 6px; font-size: 14px; }
 
-  .cz-models {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 22px;
-  }
+  .cz-models { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 22px; }
   @media (max-width: 540px) { .cz-models { grid-template-columns: repeat(2, 1fr); } }
   .cz-model {
     border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 12px 14px;
     background: var(--paper); text-align: left;
-    display: flex; flex-direction: column; gap: 8px;
-    transition: all .2s;
+    display: flex; flex-direction: column; gap: 8px; transition: all .2s;
   }
   .cz-model:hover { border-color: color-mix(in oklab, var(--accent) 50%, var(--line)); }
   .cz-model.selected { border-color: var(--accent-deep); background: color-mix(in oklab, var(--accent) 8%, var(--paper)); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 14%, transparent); }
@@ -559,9 +407,6 @@ const customizerCss = `
   .cz-field input:focus, .cz-field textarea:focus { outline: none; border-color: var(--accent-deep); }
   .cz-count { position: absolute; right: 12px; bottom: 10px; font-size: 11px; color: var(--ink-mute); pointer-events: none; }
 
-  .cz-form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  @media (max-width: 540px) { .cz-form-2col { grid-template-columns: 1fr; } }
-
   .cz-suggestions { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .cz-sug-label { font-size: 12px; color: var(--ink-soft); margin-right: 4px; }
   .cz-sug {
@@ -585,8 +430,7 @@ const customizerCss = `
   .cz-extra-check {
     width: 20px; height: 20px; border-radius: 6px;
     border: 1.5px solid var(--ink-mute); flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    transition: all .2s;
+    display: flex; align-items: center; justify-content: center; transition: all .2s;
   }
   .cz-extra.on .cz-extra-check { background: var(--accent-deep); border-color: var(--accent-deep); }
   .cz-extra.on .cz-extra-check::after { content: "✓"; color: white; font-size: 12px; font-weight: 700; }
@@ -597,8 +441,7 @@ const customizerCss = `
 
   .cz-summary {
     margin-top: 20px; padding: 18px; border-radius: 12px;
-    background: var(--bg-soft);
-    display: flex; flex-direction: column; gap: 8px;
+    background: var(--bg-soft); display: flex; flex-direction: column; gap: 8px;
   }
   .cz-summary h4 { font-family: var(--font-display); font-size: 18px; margin-bottom: 4px; font-weight: 500; }
   .cz-sum-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink-soft); }
@@ -610,16 +453,13 @@ const customizerCss = `
   }
   .cz-sum-row.total span:last-child { color: var(--accent-deep); }
 
-  .cz-error { font-size: 13px; color: #c94444; margin-top: 12px; padding: 12px; background: #fdf2f2; border-radius: 8px; }
-
   .cz-foot {
     display: flex; justify-content: space-between; align-items: center;
     padding-top: 20px; margin-top: 20px;
     border-top: 1px solid var(--line); gap: 12px;
   }
+  .cz-foot-right { display: flex; gap: 10px; align-items: center; }
   .cz-back { font-size: 14px; color: var(--ink-soft); padding: 8px 0; }
   .cz-back:hover { color: var(--ink); }
-  @media (max-width: 540px) {
-    .cz-foot .btn { padding: 13px 16px; font-size: 13px; }
-  }
+  @media (max-width: 540px) { .cz-foot .btn { padding: 13px 16px; font-size: 13px; } }
 `;

@@ -57,6 +57,7 @@ img { max-width: 100%; display: block; }
 .nav-links a { font-size: 14px; color: var(--ink-soft); }
 .nav-links a:hover { color: var(--ink); }
 @media (max-width: 760px) { .nav-links { display: none; } }
+.nav-right { display: flex; align-items: center; gap: 12px; }
 .nav-cta {
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--ink); color: var(--bg);
@@ -208,7 +209,20 @@ section { padding: 96px 0; }
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px;
 }
 @media (max-width: 920px) { .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; } }
-@media (max-width: 560px) { .gallery-grid { grid-template-columns: 1fr; } }
+@media (max-width: 560px) {
+  .gallery-grid {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 14px;
+    padding-bottom: 12px;
+    margin: 0 -18px;
+    padding-left: 18px;
+    padding-right: 18px;
+    scrollbar-width: none;
+  }
+  .gallery-grid::-webkit-scrollbar { display: none; }
+}
 .mug-card {
   background: var(--paper);
   border-radius: 14px;
@@ -218,6 +232,9 @@ section { padding: 96px 0; }
   display: flex; flex-direction: column;
 }
 .mug-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lift); border-color: color-mix(in oklab, var(--accent) 40%, var(--line)); }
+@media (max-width: 560px) {
+  .mug-card { flex: 0 0 80%; scroll-snap-align: start; }
+}
 .mug-photo {
   aspect-ratio: 1/1;
   background: var(--bg-soft);

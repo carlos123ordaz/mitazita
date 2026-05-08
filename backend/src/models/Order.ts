@@ -1,8 +1,16 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+interface IMugData {
+  modelId: string;
+  modelName: string;
+  photoUrl?: string;
+  text: { name: string; dedication: string };
+  extras: { caja: boolean; tarjeta: boolean; magica: boolean; delivery: boolean };
+}
+
 export interface IOrder extends Document {
   code: string;
-  orderType: 'custom' | 'product';
+  orderType: 'custom' | 'product' | 'combined';
   status: 'pending' | 'confirmed' | 'cancelled';
   customer: {
     name: string;
@@ -12,14 +20,10 @@ export interface IOrder extends Document {
     address: string;
     reference: string;
   };
-  // Custom mug (orderType === 'custom')
-  mug?: {
-    modelId: string;
-    modelName: string;
-    photoUrl?: string;
-    text: { name: string; dedication: string };
-    extras: { caja: boolean; tarjeta: boolean; magica: boolean; delivery: boolean };
-  };
+  // Legacy single mug (kept for backward compat)
+  mug?: IMugData;
+  // Multi-mug orders
+  mugs?: IMugData[];
   // Pre-designed product (orderType === 'product')
   product?: {
     productId: mongoose.Types.ObjectId;
@@ -27,6 +31,13 @@ export interface IOrder extends Document {
     imageUrl?: string;
     price: number;
   };
+  // Multiple products (orderType === 'combined')
+  products?: {
+    productId: mongoose.Types.ObjectId;
+    productName: string;
+    imageUrl?: string;
+    price: number;
+  }[];
   basePrice: number;
   total: number;
   confirmedAt?: Date;
@@ -37,7 +48,7 @@ export interface IOrder extends Document {
 const OrderSchema = new Schema<IOrder>(
   {
     code: { type: String, required: true, unique: true, index: true },
-    orderType: { type: String, enum: ['custom', 'product'], default: 'custom' },
+    orderType: { type: String, enum: ['custom', 'product', 'combined'], default: 'custom' },
     status: {
       type: String,
       enum: ['pending', 'confirmed', 'cancelled'],
@@ -67,12 +78,37 @@ const OrderSchema = new Schema<IOrder>(
         delivery: { type: Boolean, default: false },
       },
     },
+    mugs: [
+      {
+        modelId: { type: String },
+        modelName: { type: String },
+        photoUrl: { type: String },
+        text: {
+          name: { type: String, default: '' },
+          dedication: { type: String, default: '' },
+        },
+        extras: {
+          caja: { type: Boolean, default: false },
+          tarjeta: { type: Boolean, default: false },
+          magica: { type: Boolean, default: false },
+          delivery: { type: Boolean, default: false },
+        },
+      },
+    ],
     product: {
       productId: { type: Schema.Types.ObjectId, ref: 'Product' },
       productName: { type: String },
       imageUrl: { type: String },
       price: { type: Number },
     },
+    products: [
+      {
+        productId: { type: Schema.Types.ObjectId, ref: 'Product' },
+        productName: { type: String },
+        imageUrl: { type: String },
+        price: { type: Number },
+      },
+    ],
     basePrice: { type: Number, required: true },
     total: { type: Number, required: true },
     confirmedAt: { type: Date },

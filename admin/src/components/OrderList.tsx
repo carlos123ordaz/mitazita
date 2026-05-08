@@ -8,7 +8,8 @@ interface Order {
   code: string;
   status: 'pending' | 'confirmed' | 'cancelled';
   customer: { name: string; surname: string; phone: string; email: string };
-  mug: { modelName: string };
+  mug?: { modelName: string };
+  mugs?: { modelName: string }[];
   total: number;
   createdAt: string;
 }
@@ -95,7 +96,11 @@ export default function OrderList() {
                 <div style={s.name}>{o.customer.name} {o.customer.surname}</div>
                 <div style={s.phone}>{o.customer.phone}</div>
               </span>
-              <span style={s.model}>{o.mug.modelName}</span>
+              <span style={s.model}>
+                {o.mugs && o.mugs.length > 1
+                  ? `${o.mugs.length} tazas`
+                  : (o.mugs?.[0]?.modelName || o.mug?.modelName || '—')}
+              </span>
               <span style={s.price}>S/ {o.total}</span>
               <span>
                 <span style={{ ...s.badge, ...STATUS_COLORS[o.status] }}>

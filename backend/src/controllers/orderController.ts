@@ -21,30 +21,44 @@ async function uniqueCode(): Promise<string> {
 }
 
 export const createOrder = async (req: Request, res: Response): Promise<void> => {
-  const { customer, mug, product, orderType = 'custom', basePrice, total } = req.body;
+  const { customer, mug, mugs, product, products, orderType = 'custom', basePrice, total } = req.body;
 
   if (!customer?.name || !customer?.surname || !customer?.phone || !customer?.email || !customer?.address) {
     res.status(400).json({ error: 'Datos del cliente incompletos' });
     return;
   }
 
-  if (orderType === 'custom' && (!mug?.modelId || !mug?.modelName)) {
-    res.status(400).json({ error: 'Datos del modelo requeridos' });
-    return;
+  if (orderType === 'custom') {
+    const mugList = mugs || (mug ? [mug] : []);
+    if (mugList.length === 0 || !mugList[0]?.modelId || !mugList[0]?.modelName) {
+      res.status(400).json({ error: 'Datos del modelo requeridos' });
+      return;
+    }
   }
   if (orderType === 'product' && (!product?.productId || !product?.productName)) {
     res.status(400).json({ error: 'Datos del producto requeridos' });
     return;
   }
+  if (orderType === 'combined') {
+    const hasMugs = Array.isArray(mugs) && mugs.length > 0;
+    const hasProducts = Array.isArray(products) && products.length > 0;
+    if (!hasMugs && !hasProducts) {
+      res.status(400).json({ error: 'El carrito está vacío' });
+      return;
+    }
+  }
 
   try {
     const code = await uniqueCode();
+    const mugList = mugs || (mug ? [mug] : undefined);
     const order = await Order.create({
       code,
       orderType,
       customer,
-      mug: orderType === 'custom' ? mug : undefined,
+      mug: orderType === 'custom' ? (mugList?.[0] ?? mug) : undefined,
+      mugs: (orderType === 'custom' || orderType === 'combined') ? mugList : undefined,
       product: orderType === 'product' ? product : undefined,
+      products: orderType === 'combined' ? products : undefined,
       basePrice,
       total,
     });

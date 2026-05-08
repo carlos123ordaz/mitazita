@@ -3,6 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api, authHeaders } from '../services/api';
 
+interface MugData {
+  modelId: string;
+  modelName: string;
+  photoUrl?: string;
+  text: { name: string; dedication: string };
+  extras: { caja: boolean; tarjeta: boolean; magica: boolean; delivery: boolean };
+}
+
 interface Order {
   _id: string;
   code: string;
@@ -15,13 +23,8 @@ interface Order {
     address: string;
     reference: string;
   };
-  mug: {
-    modelId: string;
-    modelName: string;
-    photoUrl?: string;
-    text: { name: string; dedication: string };
-    extras: { caja: boolean; tarjeta: boolean; magica: boolean; delivery: boolean };
-  };
+  mug?: MugData;
+  mugs?: MugData[];
   basePrice: number;
   total: number;
   createdAt: string;
@@ -97,9 +100,11 @@ export default function OrderDetail() {
   if (error && !order) return <p style={{ color: 'var(--danger)' }}>{error}</p>;
   if (!order) return null;
 
-  const activeExtras = Object.entries(order.mug.extras)
-    .filter(([, val]) => val)
-    .map(([key]) => EXTRAS_LABELS[key]);
+  const mugList: MugData[] = order.mugs?.length
+    ? order.mugs
+    : order.mug
+    ? [order.mug]
+    : [];
 
   const statusColor: Record<string, string> = {
     pending: '#c97a30',
@@ -161,27 +166,35 @@ export default function OrderDetail() {
           </div>
         </div>
 
-        {/* Mug */}
-        <div style={s.card}>
-          <h3 style={s.cardTitle}>Taza</h3>
-          <Row label="Modelo" value={order.mug.modelName} />
-          {order.mug.text.name && <Row label="Nombre en taza" value={order.mug.text.name} />}
-          {order.mug.text.dedication && <Row label="Dedicatoria" value={`"${order.mug.text.dedication}"`} />}
-          {activeExtras.length > 0 && (
-            <div style={s.extrasBlock}>
-              <div style={s.rowLabel}>Extras</div>
-              <ul style={s.extrasList}>
-                {activeExtras.map((e) => <li key={e} style={s.extrasItem}>✓ {e}</li>)}
-              </ul>
+        {/* Mugs */}
+        {mugList.map((mug, i) => {
+          const mugExtras = Object.entries(mug.extras)
+            .filter(([, val]) => val)
+            .map(([key]) => EXTRAS_LABELS[key])
+            .filter(Boolean);
+          return (
+            <div key={i} style={s.card}>
+              <h3 style={s.cardTitle}>{mugList.length > 1 ? `Taza ${i + 1}` : 'Taza'}</h3>
+              <Row label="Modelo" value={mug.modelName} />
+              {mug.text.name && <Row label="Nombre en taza" value={mug.text.name} />}
+              {mug.text.dedication && <Row label="Dedicatoria" value={`"${mug.text.dedication}"`} />}
+              {mugExtras.length > 0 && (
+                <div style={s.extrasBlock}>
+                  <div style={s.rowLabel}>Extras</div>
+                  <ul style={s.extrasList}>
+                    {mugExtras.map((e) => <li key={e} style={s.extrasItem}>✓ {e}</li>)}
+                  </ul>
+                </div>
+              )}
+              {mug.photoUrl && (
+                <div style={s.photoBlock}>
+                  <div style={s.rowLabel}>Foto</div>
+                  <img src={mug.photoUrl} alt="Foto del pedido" style={s.photo} />
+                </div>
+              )}
             </div>
-          )}
-          {order.mug.photoUrl && (
-            <div style={s.photoBlock}>
-              <div style={s.rowLabel}>Foto</div>
-              <img src={order.mug.photoUrl} alt="Foto del pedido" style={s.photo} />
-            </div>
-          )}
-        </div>
+          );
+        })}
 
         {/* Summary */}
         <div style={s.card}>

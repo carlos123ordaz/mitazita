@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Gallery from '../components/Gallery';
 import ProductGrid from '../components/ProductGrid';
 import Customizer from '../components/Customizer';
+import CartButton from '../components/CartButton';
 import Reviews from '../components/Reviews';
 import '../styles/global.css';
 
@@ -21,10 +22,13 @@ const WA_PHONE = '51944073494';
         <a href="#como">Cómo funciona</a>
         <a href="#resenas">Reseñas</a>
       </div>
-      <a href="#personalizar" class="nav-cta">
-        Personalizar
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-      </a>
+      <div class="nav-right">
+        <CartButton client:load />
+        <a href="#personalizar" class="nav-cta">
+          Personalizar
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </a>
+      </div>
     </div>
   </nav>
 
