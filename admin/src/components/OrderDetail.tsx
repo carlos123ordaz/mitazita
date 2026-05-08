@@ -31,8 +31,7 @@ interface Order {
 const EXTRAS_LABELS: Record<string, string> = {
   caja: 'Caja de regalo (+S/ 8)',
   tarjeta: 'Tarjeta dedicatoria (+S/ 5)',
-  magica: 'Convertir en taza mágica (+S/ 10)',
-  delivery: 'Delivery Lima 24h (+S/ 12)',
+  delivery: 'Delivery Lima 24h (+S/ 6)',
 };
 
 export default function OrderDetail() {

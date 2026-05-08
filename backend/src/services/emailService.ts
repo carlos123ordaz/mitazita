@@ -13,8 +13,7 @@ const EXTRAS_LABELS: Record<string, string> = {
 const EXTRAS_PRICES: Record<string, number> = {
   caja: 8,
   tarjeta: 5,
-  magica: 10,
-  delivery: 12,
+  delivery: 6,
 };
 
 export async function sendConfirmationEmail(order: IOrder): Promise<void> {

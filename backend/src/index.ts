@@ -1,4 +1,6 @@
 import './env'; // must be first — loads .env before any other module initializes
+import dns from 'node:dns/promises';
+dns.setServers(['1.1.1.1', '8.8.8.8']);
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
