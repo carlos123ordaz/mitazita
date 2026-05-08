@@ -11,9 +11,17 @@ interface MugData {
   extras: { caja: boolean; tarjeta: boolean; magica: boolean; delivery: boolean };
 }
 
+interface ProductData {
+  productId: string;
+  productName: string;
+  imageUrl?: string;
+  price: number;
+}
+
 interface Order {
   _id: string;
   code: string;
+  orderType: 'custom' | 'product' | 'combined';
   status: 'pending' | 'confirmed' | 'cancelled';
   customer: {
     name: string;
@@ -25,6 +33,8 @@ interface Order {
   };
   mug?: MugData;
   mugs?: MugData[];
+  product?: ProductData;
+  products?: ProductData[];
   basePrice: number;
   total: number;
   createdAt: string;
@@ -34,7 +44,7 @@ interface Order {
 const EXTRAS_LABELS: Record<string, string> = {
   caja: 'Caja de regalo (+S/ 8)',
   tarjeta: 'Tarjeta dedicatoria (+S/ 5)',
-  delivery: 'Delivery Lima 24h (+S/ 6)',
+  magica: 'Efecto mágico',
 };
 
 export default function OrderDetail() {
@@ -106,10 +116,26 @@ export default function OrderDetail() {
     ? [order.mug]
     : [];
 
+  const productList: ProductData[] = order.products?.length
+    ? order.products
+    : order.product
+    ? [order.product]
+    : [];
+
+  const deliveryFee = order.total - order.basePrice > 0 ? order.total - order.basePrice : 0;
+  // Delivery is S/6 flat; only show the line if the difference matches
+  const showDelivery = deliveryFee >= 6;
+
   const statusColor: Record<string, string> = {
     pending: '#c97a30',
     confirmed: '#2a9d5a',
     cancelled: '#c94444',
+  };
+
+  const orderTypeLabel: Record<string, string> = {
+    custom: 'Taza personalizada',
+    product: 'Diseño listo',
+    combined: 'Pedido combinado',
   };
 
   return (
@@ -121,8 +147,11 @@ export default function OrderDetail() {
       <div style={s.header}>
         <div>
           <div style={s.code}>{order.code}</div>
-          <div style={{ ...s.badge, color: statusColor[order.status] }}>
-            {{ pending: 'Pendiente', confirmed: 'Confirmado', cancelled: 'Cancelado' }[order.status]}
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 6, flexWrap: 'wrap' }}>
+            <div style={{ ...s.badge, color: statusColor[order.status] }}>
+              {{ pending: 'Pendiente', confirmed: 'Confirmado', cancelled: 'Cancelado' }[order.status]}
+            </div>
+            <div style={s.typeBadge}>{orderTypeLabel[order.orderType] ?? order.orderType}</div>
           </div>
         </div>
         {order.status === 'pending' && (
@@ -146,7 +175,7 @@ export default function OrderDetail() {
       {error && <p style={{ color: 'var(--danger)', marginBottom: 16, fontSize: 13 }}>{error}</p>}
 
       <div style={s.grid}>
-        {/* Customer */}
+        {/* Cliente */}
         <div style={s.card}>
           <h3 style={s.cardTitle}>Cliente</h3>
           <Row label="Nombre" value={`${order.customer.name} ${order.customer.surname}`} />
@@ -166,15 +195,15 @@ export default function OrderDetail() {
           </div>
         </div>
 
-        {/* Mugs */}
+        {/* Tazas personalizadas */}
         {mugList.map((mug, i) => {
           const mugExtras = Object.entries(mug.extras)
-            .filter(([, val]) => val)
+            .filter(([key, val]) => val && key !== 'delivery')
             .map(([key]) => EXTRAS_LABELS[key])
             .filter(Boolean);
           return (
             <div key={i} style={s.card}>
-              <h3 style={s.cardTitle}>{mugList.length > 1 ? `Taza ${i + 1}` : 'Taza'}</h3>
+              <h3 style={s.cardTitle}>{mugList.length > 1 ? `Taza ${i + 1}` : 'Taza personalizada'}</h3>
               <Row label="Modelo" value={mug.modelName} />
               {mug.text.name && <Row label="Nombre en taza" value={mug.text.name} />}
               {mug.text.dedication && <Row label="Dedicatoria" value={`"${mug.text.dedication}"`} />}
@@ -196,12 +225,28 @@ export default function OrderDetail() {
           );
         })}
 
-        {/* Summary */}
+        {/* Diseños listos */}
+        {productList.map((prod, i) => (
+          <div key={i} style={s.card}>
+            <h3 style={s.cardTitle}>{productList.length > 1 ? `Diseño listo ${i + 1}` : 'Diseño listo'}</h3>
+            <Row label="Producto" value={prod.productName} />
+            <Row label="Precio" value={`S/ ${prod.price}`} />
+            {prod.imageUrl && (
+              <div style={s.photoBlock}>
+                <div style={s.rowLabel}>Imagen</div>
+                <img src={prod.imageUrl} alt={prod.productName} style={s.photo} />
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Resumen */}
         <div style={s.card}>
           <h3 style={s.cardTitle}>Resumen</h3>
-          <Row label="Precio base" value={`S/ ${order.basePrice}`} />
+          <Row label="Subtotal productos" value={`S/ ${order.basePrice}`} />
+          {showDelivery && <Row label="Delivery Lima 24h" value="S/ 6" />}
           <Row label="Total" value={`S/ ${order.total}`} bold />
-          <Row label="Pedido realizado" value={new Date(order.createdAt).toLocaleString('es-PE')} />
+          <Row label="Fecha del pedido" value={new Date(order.createdAt).toLocaleString('es-PE')} />
           {order.confirmedAt && (
             <Row label="Confirmado" value={new Date(order.confirmedAt).toLocaleString('es-PE')} />
           )}
@@ -225,84 +270,42 @@ function confirm_native(msg: string): boolean {
 }
 
 const s: Record<string, React.CSSProperties> = {
-  back: {
-    fontSize: 13,
-    color: 'var(--ink-soft)',
-    padding: '0 0 24px',
-    cursor: 'pointer',
-  },
+  back: { fontSize: 13, color: 'var(--ink-soft)', padding: '0 0 24px', cursor: 'pointer' },
   header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 28,
-    flexWrap: 'wrap',
-    gap: 16,
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: 28, flexWrap: 'wrap', gap: 16,
   },
-  code: {
-    fontFamily: 'monospace',
-    fontSize: 28,
-    fontWeight: 700,
-    color: 'var(--accent-deep)',
-    letterSpacing: '.06em',
+  code: { fontFamily: 'monospace', fontSize: 28, fontWeight: 700, color: 'var(--accent-deep)', letterSpacing: '.06em' },
+  badge: { fontSize: 13, fontWeight: 600 },
+  typeBadge: {
+    fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase',
+    padding: '3px 10px', borderRadius: 999,
+    background: 'var(--bg-soft)', color: 'var(--ink-soft)',
+    border: '1px solid var(--line)',
   },
-  badge: { fontSize: 13, fontWeight: 600, marginTop: 4 },
   actions: { display: 'flex', gap: 12, alignItems: 'center' },
   btnConfirm: {
-    padding: '12px 24px',
-    borderRadius: 999,
-    background: 'var(--success)',
-    color: 'white',
-    fontWeight: 600,
-    fontSize: 14,
-    cursor: 'pointer',
+    padding: '12px 24px', borderRadius: 999, background: 'var(--success)',
+    color: 'white', fontWeight: 600, fontSize: 14, cursor: 'pointer',
   },
   btnCancel: {
-    padding: '11px 20px',
-    borderRadius: 999,
-    border: '1.5px solid var(--danger)',
-    color: 'var(--danger)',
-    fontWeight: 500,
-    fontSize: 14,
-    cursor: 'pointer',
+    padding: '11px 20px', borderRadius: 999, border: '1.5px solid var(--danger)',
+    color: 'var(--danger)', fontWeight: 500, fontSize: 14, cursor: 'pointer',
   },
   btnWa: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 8,
-    padding: '12px 22px',
-    borderRadius: 999,
-    background: '#25D366',
-    color: 'white',
-    fontWeight: 600,
-    fontSize: 14,
-    cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', gap: 8,
+    padding: '12px 22px', borderRadius: 999, background: '#25D366',
+    color: 'white', fontWeight: 600, fontSize: 14, cursor: 'pointer',
   },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: 20,
-  },
-  card: {
-    background: 'var(--paper)',
-    border: '1px solid var(--line)',
-    borderRadius: 14,
-    padding: '24px',
-  },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 },
+  card: { background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 14, padding: '24px' },
   cardTitle: {
-    fontFamily: 'var(--font-display)',
-    fontSize: 20,
-    marginBottom: 18,
-    paddingBottom: 12,
-    borderBottom: '1px solid var(--line)',
+    fontFamily: 'var(--font-display)', fontSize: 20, marginBottom: 18,
+    paddingBottom: 12, borderBottom: '1px solid var(--line)',
   },
   rowWrap: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    gap: 12,
-    padding: '8px 0',
-    borderBottom: '1px solid var(--line)',
-    fontSize: 14,
+    display: 'flex', justifyContent: 'space-between', gap: 12,
+    padding: '8px 0', borderBottom: '1px solid var(--line)', fontSize: 14,
   },
   rowLabel: { color: 'var(--ink-soft)', flexShrink: 0 },
   rowValue: { textAlign: 'right', wordBreak: 'break-word' },

@@ -315,7 +315,15 @@ export default function Customizer() {
 const customizerCss = `
   .cz { background: var(--paper); border-radius: 20px; border: 1px solid var(--line); overflow: hidden; box-shadow: var(--shadow-soft); }
   .cz-grid { display: grid; grid-template-columns: 1.05fr 1.1fr; min-height: 640px; }
-  @media (max-width: 920px) { .cz-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 920px) {
+    .cz-grid { grid-template-columns: 1fr; min-height: unset; }
+    .cz-form { order: 1; }
+    .cz-preview { order: 2; padding: 20px 24px 28px; }
+    .cz-preview-stage { padding: 8px 0; overflow: hidden; }
+    .cz-preview-stage svg { width: min(260px, 62vw) !important; height: auto !important; }
+    .cz-pf-name { font-size: 18px; }
+    .cz-pf-price { font-size: 26px; }
+  }
 
   .cz-preview {
     background: linear-gradient(180deg, var(--bg-soft) 0%, color-mix(in oklab, var(--bg-soft) 70%, var(--paper)) 100%);
@@ -335,7 +343,15 @@ const customizerCss = `
   .cz-pf-price { font-family: var(--font-display); font-size: 36px; color: var(--accent-deep); font-weight: 500; }
 
   .cz-form { padding: 32px 36px 28px; display: flex; flex-direction: column; }
-  @media (max-width: 540px) { .cz-form { padding: 24px 20px; } }
+  @media (max-width: 540px) {
+    .cz-form { padding: 22px 18px 20px; }
+    .cz-q { font-size: 22px; }
+    .cz-drop { aspect-ratio: 4/3; }
+    .cz-extra { padding: 11px 12px; gap: 10px; }
+    .cz-extra-label { font-size: 13px; }
+    .cz-summary { padding: 14px; }
+    .cz-sum-row.total { font-size: 18px; }
+  }
 
   .cz-form-header { margin-bottom: 28px; }
   .cz-steps { display: flex; gap: 6px; flex-wrap: wrap; }

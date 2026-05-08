@@ -6,10 +6,13 @@ import { api, authHeaders } from '../services/api';
 interface Order {
   _id: string;
   code: string;
+  orderType: 'custom' | 'product' | 'combined';
   status: 'pending' | 'confirmed' | 'cancelled';
   customer: { name: string; surname: string; phone: string; email: string };
   mug?: { modelName: string };
   mugs?: { modelName: string }[];
+  product?: { productName: string };
+  products?: { productName: string }[];
   total: number;
   createdAt: string;
 }
@@ -25,6 +28,24 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   confirmed: { bg: '#e8f5e9', color: '#2a9d5a' },
   cancelled: { bg: '#fce4e4', color: '#c94444' },
 };
+
+function resolveModel(o: Order): string {
+  if (o.orderType === 'product') {
+    const name = o.products?.[0]?.productName || o.product?.productName;
+    return name ?? 'Diseño listo';
+  }
+  if (o.orderType === 'combined') {
+    const mugCount = o.mugs?.length ?? (o.mug ? 1 : 0);
+    const prodCount = o.products?.length ?? (o.product ? 1 : 0);
+    const parts = [];
+    if (mugCount > 0) parts.push(`${mugCount} taza${mugCount > 1 ? 's' : ''}`);
+    if (prodCount > 0) parts.push(`${prodCount} diseño${prodCount > 1 ? 's' : ''}`);
+    return parts.join(' + ') || 'Combinado';
+  }
+  // custom
+  if (o.mugs && o.mugs.length > 1) return `${o.mugs.length} tazas`;
+  return o.mugs?.[0]?.modelName || o.mug?.modelName || '—';
+}
 
 export default function OrderList() {
   const { token } = useAuth();
@@ -96,11 +117,7 @@ export default function OrderList() {
                 <div style={s.name}>{o.customer.name} {o.customer.surname}</div>
                 <div style={s.phone}>{o.customer.phone}</div>
               </span>
-              <span style={s.model}>
-                {o.mugs && o.mugs.length > 1
-                  ? `${o.mugs.length} tazas`
-                  : (o.mugs?.[0]?.modelName || o.mug?.modelName || '—')}
-              </span>
+              <span style={s.model}>{resolveModel(o)}</span>
               <span style={s.price}>S/ {o.total}</span>
               <span>
                 <span style={{ ...s.badge, ...STATUS_COLORS[o.status] }}>
